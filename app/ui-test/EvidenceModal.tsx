@@ -184,7 +184,6 @@ export default function EvidenceModal({
                   {[...cases].reverse().map((c) => (
                     <div key={c.id} className={styles.caseCard}>
                       <div className={styles.thumbnail}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={c.image} alt={`케이스 ${c.caseNumber} 캡처`} />
                       </div>
 

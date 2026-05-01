@@ -90,7 +90,7 @@ export default function RootLayout({ children }) {
 }
 ```
 
-### 4. 팝업 컴포넌트에 화면ID 등록 (선택)
+### 5. 팝업 컴포넌트에 화면ID 등록 (선택)
 
 팝업이 열렸을 때 해당 화면의 ID·이름으로 자동 전환됩니다. 등록하지 않으면 URL 경로에서 자동 생성합니다.
 
