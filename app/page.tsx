@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import Header from "@/app/components/Header";
 import UserTable from "@/app/components/UserTable";
 import Pagination from "@/app/components/Pagination";
-import TestEvidenceModal from "@/app/components/TestEvidenceModal";
+import UserRegisterModal from "@/app/components/UserRegisterModal";
 import type { User, Status } from "@/app/types";
 
 const MOCK_DATA: User[] = [
@@ -38,9 +38,7 @@ export default function UserListPage() {
   const [appliedStatus, setAppliedStatus] = useState<"" | Status>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [evidenceImage, setEvidenceImage] = useState<string | null>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
-  const mainRef = useRef<HTMLElement>(null);
+  const [registerOpen, setRegisterOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return MOCK_DATA.filter((u) => {
@@ -81,27 +79,6 @@ export default function UserListPage() {
     );
   }
 
-  async function captureScreen() {
-    setIsCapturing(true);
-    try {
-      const { toPng } = await import("html-to-image");
-      const target = mainRef.current ?? document.body;
-      const dataUrl = await toPng(target, { pixelRatio: 1.5, cacheBust: true });
-      setEvidenceImage(dataUrl);
-    } finally {
-      setIsCapturing(false);
-    }
-  }
-
-  async function handleOpenEvidence() {
-    await captureScreen();
-  }
-
-  async function handleRecapture() {
-    setEvidenceImage(null);
-    await captureScreen();
-  }
-
   function handleToggleAll(ids: number[]) {
     const allSelected = ids.every((id) => selectedIds.includes(id));
     setSelectedIds(
@@ -114,27 +91,13 @@ export default function UserListPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main ref={mainRef} className="flex-1 px-8 py-6 max-w-7xl w-full mx-auto">
+      <main className="flex-1 px-8 py-6 max-w-7xl w-full mx-auto">
 
         <div className="mb-5 flex items-start justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-800">사용자 목록</h1>
             <p className="text-sm text-gray-500 mt-0.5">시스템에 등록된 사용자를 조회합니다.</p>
           </div>
-          <button
-            onClick={handleOpenEvidence}
-            disabled={isCapturing}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors disabled:opacity-60"
-          >
-            {isCapturing ? (
-              <>
-                <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                캡처 중...
-              </>
-            ) : (
-              <>📸 테스트 증빙</>
-            )}
-          </button>
         </div>
 
         {/* 검색 영역 */}
@@ -165,12 +128,14 @@ export default function UserListPage() {
             </div>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={handleSearch}
                 className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors font-medium"
               >
                 조회
               </button>
               <button
+                type="button"
                 onClick={handleReset}
                 className="px-4 py-2 bg-white text-gray-600 text-sm rounded border border-gray-300 hover:bg-gray-50 transition-colors"
               >
@@ -189,16 +154,18 @@ export default function UserListPage() {
             )}
           </span>
           <div className="flex gap-2">
-            <button className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
+            <button type="button" onClick={() => setRegisterOpen(true)} className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors">
               등록
             </button>
             <button
+              type="button"
               disabled={selectedIds.length !== 1}
               className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-40"
             >
               수정
             </button>
             <button
+              type="button"
               disabled={selectedIds.length === 0}
               className="px-3 py-1.5 text-sm bg-white border border-red-300 text-red-600 rounded hover:bg-red-50 transition-colors disabled:opacity-40"
             >
@@ -227,12 +194,10 @@ export default function UserListPage() {
         />
       </main>
 
-      {/* 테스트 증빙 모달 */}
-      {evidenceImage && (
-        <TestEvidenceModal
-          image={evidenceImage}
-          onClose={() => setEvidenceImage(null)}
-          onRecapture={handleRecapture}
+      {registerOpen && (
+        <UserRegisterModal
+          onClose={() => setRegisterOpen(false)}
+          onSave={() => {}}
         />
       )}
     </div>
