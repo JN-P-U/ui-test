@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+import EvidenceFloat from "@/app/_evidence/EvidenceFloat";
+import { EvidenceScreenProvider } from "@/app/_evidence/EvidenceContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,7 +22,10 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${geistSans.variable} h-full`}>
       <body className="h-full bg-gray-50 text-gray-900 antialiased">
-        {children}
+        <EvidenceScreenProvider>
+          {children}
+          <EvidenceFloat />
+        </EvidenceScreenProvider>
       </body>
     </html>
   );
