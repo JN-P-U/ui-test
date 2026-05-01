@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { CaseItem } from "./types";
 import EvidenceModal from "./EvidenceModal";
 import { useEvidenceScreenCtx } from "./EvidenceContext";
+import styles from "./evidence.module.css";
 
 function waitFrames() {
   return new Promise<void>((resolve) =>
@@ -47,7 +48,7 @@ export default function EvidenceFloat() {
     if (cases.length > 0) { setModalOpen(true); return; }
     initMeta();
     setIsCapturing(true);
-    await waitFrames(); // 버튼 숨김이 DOM에 반영된 뒤 캡처
+    await waitFrames();
     try {
       const image = await captureScreen();
       setCases([{
@@ -68,7 +69,7 @@ export default function EvidenceFloat() {
 
   async function handlePendingCapture() {
     setIsCapturing(true);
-    await waitFrames(); // 버튼 숨김이 DOM에 반영된 뒤 캡처
+    await waitFrames();
     try {
       const image = await captureScreen();
       setCases((prev) => {
@@ -99,48 +100,32 @@ export default function EvidenceFloat() {
     setCases((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
   }
 
-  // 캡처 중에는 모든 플로팅 UI 숨김
   if (isCapturing) return null;
 
   return (
     <>
-      {/* 플로팅 트리거 버튼 — 모달 열려 있을 때는 숨김 */}
       {!pendingCapture && !modalOpen && (
-        <div className="fixed bottom-6 right-6 z-[10001]">
-          <button
-            type="button"
-            onClick={handleOpenEvidence}
-            className="flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-full shadow-lg hover:bg-green-700 transition-colors"
-          >
+        <div className={styles.floatWrap} style={{ zIndex: 10001 }}>
+          <button type="button" onClick={handleOpenEvidence} className={styles.floatBtn}>
             {cases.length > 0 ? <>케이스 추가 ({cases.length})</> : <>테스트결과 추가</>}
           </button>
         </div>
       )}
 
-      {/* 케이스 추가 캡처 대기 */}
       {pendingCapture && (
-        <div className="fixed bottom-6 right-6 z-[10001] flex flex-col items-end gap-2">
-          <div className="bg-black/75 text-white text-xs rounded-lg px-3 py-2 text-right leading-5">
+        <div className={styles.pendingWrap} style={{ zIndex: 10001 }}>
+          <div className={styles.pendingTooltip}>
             원하는 화면 상태로 이동 후<br />아래 버튼을 눌러 캡처하세요
           </div>
-          <button
-            type="button"
-            onClick={handlePendingCapture}
-            className="px-5 py-3 bg-green-600 text-white text-sm font-bold rounded-full shadow-xl hover:bg-green-700 transition-colors"
-          >
+          <button type="button" onClick={handlePendingCapture} className={styles.pendingCaptureBtn}>
             캡처 추가
           </button>
-          <button
-            type="button"
-            onClick={handleCancelPendingCapture}
-            className="px-4 py-2 bg-white text-gray-600 text-xs border border-gray-300 rounded-full shadow hover:bg-gray-50 transition-colors"
-          >
+          <button type="button" onClick={handleCancelPendingCapture} className={styles.pendingBackBtn}>
             ← 돌아가기
           </button>
         </div>
       )}
 
-      {/* 증빙 모달 */}
       {modalOpen && (
         <EvidenceModal
           cases={cases}

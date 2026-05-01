@@ -40,12 +40,13 @@ npm run dev
 ### 1. 파일 복사
 
 ```
-app/_evidence/          ← 이 폴더 전체 복사
+app/ui-test/          ← 이 폴더 전체 복사
   ├── types.ts
   ├── AlertDialog.tsx
   ├── EvidenceContext.tsx
   ├── EvidenceModal.tsx
   ├── EvidenceFloat.tsx
+  ├── evidence.module.css
   └── generate-excel.ts
 ```
 
@@ -60,8 +61,8 @@ npm install exceljs html-to-image
 ### 3. layout.tsx에 등록
 
 ```tsx
-import { EvidenceScreenProvider } from "@/app/_evidence/EvidenceContext";
-import EvidenceFloat from "@/app/_evidence/EvidenceFloat";
+import { EvidenceScreenProvider } from "@/app/ui-test/EvidenceContext";
+import EvidenceFloat from "@/app/ui-test/EvidenceFloat";
 
 export default function RootLayout({ children }) {
   return (
@@ -82,7 +83,7 @@ export default function RootLayout({ children }) {
 팝업이 열렸을 때 해당 화면의 ID·이름으로 자동 전환됩니다. 등록하지 않으면 URL 경로에서 자동 생성합니다.
 
 ```tsx
-import { useEvidenceScreen } from "@/app/_evidence/EvidenceContext";
+import { useEvidenceScreen } from "@/app/ui-test/EvidenceContext";
 
 export default function MyModal() {
   useEvidenceScreen("MyModalId", "모달 화면명");

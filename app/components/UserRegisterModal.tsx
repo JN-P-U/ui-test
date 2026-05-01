@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import type { Status } from "@/app/types";
-import { useEvidenceScreen } from "@/app/_evidence/EvidenceContext";
-import AlertDialog from "@/app/_evidence/AlertDialog";
+import { useEvidenceScreen } from "@/app/ui-test/EvidenceContext";
+import AlertDialog from "@/app/ui-test/AlertDialog";
 
 interface Props {
   onClose: () => void;
