@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+"use server";
+
 import ExcelJS from "exceljs";
 
 interface CasePayload {
@@ -36,8 +37,7 @@ function getPngSize(base64: string): { w: number; h: number } {
   return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) };
 }
 
-export async function POST(req: NextRequest) {
-  const body: RequestBody = await req.json();
+export async function generateExcel(body: RequestBody): Promise<Uint8Array> {
   const { serviceCode, screenId, screenName, author, capturedAt, bizCategory, level1, level2, level3, level4, cases } = body;
 
   const workbook = new ExcelJS.Workbook();
@@ -59,16 +59,8 @@ export async function POST(req: NextRequest) {
   const evidenceSheet = workbook.addWorksheet("단위테스트케이스결과증빙");
   setupEvidenceSheet(workbook, evidenceSheet, cases);
 
-  const fileName = `MAL_${serviceCode}_AC02(단위테스트케이스결과서)_UT_${screenId}_${screenName}_V1.0.xlsx`;
   const buffer = await workbook.xlsx.writeBuffer();
-
-  return new NextResponse(buffer, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`,
-    },
-  });
+  return new Uint8Array(buffer as ArrayBuffer);
 }
 
 function setupCoverSheet(

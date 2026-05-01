@@ -1,8 +1,9 @@
 "use client";
 
-import AlertDialog from "@/app/components/AlertDialog";
+import AlertDialog from "./AlertDialog";
 import { useState } from "react";
 import type { CaseItem } from "./types";
+import { generateExcel } from "./generate-excel";
 
 interface Props {
   cases: CaseItem[];
@@ -87,13 +88,10 @@ export default function EvidenceModal({
           verifyMethod: c.verifyMethod,
         })),
       };
-      const res = await fetch("/api/generate-excel", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const uint8 = await generateExcel(payload);
+      const blob = new Blob([uint8.buffer as ArrayBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
-      if (!res.ok) throw new Error("엑셀 생성 실패");
-      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

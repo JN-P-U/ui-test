@@ -40,18 +40,16 @@ npm run dev
 ### 1. 파일 복사
 
 ```
-app/_evidence/
+app/_evidence/          ← 이 폴더 전체 복사
   ├── types.ts
+  ├── AlertDialog.tsx
   ├── EvidenceContext.tsx
   ├── EvidenceModal.tsx
-  └── EvidenceFloat.tsx
-
-app/components/
-  └── AlertDialog.tsx
-
-app/api/generate-excel/
-  └── route.ts
+  ├── EvidenceFloat.tsx
+  └── generate-excel.ts
 ```
+
+별도 API 라우트 불필요 — `generate-excel.ts`가 Server Action으로 직접 호출됩니다.
 
 ### 2. 패키지 설치
 

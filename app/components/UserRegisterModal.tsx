@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Status } from "@/app/types";
 import { useEvidenceScreen } from "@/app/_evidence/EvidenceContext";
-import AlertDialog from "./AlertDialog";
+import AlertDialog from "@/app/_evidence/AlertDialog";
 
 interface Props {
   onClose: () => void;
