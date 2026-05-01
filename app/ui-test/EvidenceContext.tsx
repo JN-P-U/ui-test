@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useState,
+  type ReactNode,
 } from "react";
 import { usePathname } from "next/navigation";
 
@@ -33,7 +34,7 @@ const EvidenceScreenContext = createContext<ScreenCtx>({
   resetScreen: () => {},
 });
 
-export function EvidenceScreenProvider({ children }: { children: React.ReactNode }) {
+export function EvidenceScreenProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [override, setOverride] = useState<{ id: string; name: string } | null>(null);
 

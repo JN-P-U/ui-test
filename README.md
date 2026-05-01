@@ -58,7 +58,19 @@ app/ui-test/          ← 이 폴더 전체 복사
 npm install exceljs html-to-image
 ```
 
-### 3. layout.tsx에 등록
+### 3. next.config 설정
+
+`exceljs`는 Node.js built-in(`fs`, `stream` 등)을 사용하므로, webpack이 번들하려다 빌드 에러가 납니다.
+`next.config.ts`(또는 `.js`)에 아래 한 줄을 추가하세요.
+
+```ts
+const nextConfig = {
+  // 기존 설정 유지 ...
+  serverExternalPackages: ["exceljs"],
+};
+```
+
+### 4. layout.tsx에 등록
 
 ```tsx
 import { EvidenceScreenProvider } from "@/app/ui-test/EvidenceContext";
