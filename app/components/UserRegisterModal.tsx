@@ -3,7 +3,19 @@
 import { useState } from "react";
 import type { Status } from "@/app/types";
 import { useEvidenceScreen } from "@/app/ui-test/EvidenceContext";
-import AlertDialog from "@/app/ui-test/AlertDialog";
+
+function AlertDialog({ message, onClose, zIndex = 10000 }: { message: string; onClose: () => void; zIndex?: number }) {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex }} onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+        <p className="text-sm text-gray-700 whitespace-pre-wrap mb-4">{message}</p>
+        <div className="flex justify-end">
+          <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700">확인</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface Props {
   onClose: () => void;
