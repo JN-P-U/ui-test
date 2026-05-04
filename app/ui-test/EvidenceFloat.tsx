@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { CaseItem } from "./types";
-import EvidenceModal from "./EvidenceModal";
+import EvidenceModal, { type CaseItem } from "./EvidenceModal";
 import { useEvidenceScreenCtx } from "./EvidenceContext";
 import styles from "./evidence.module.css";
 
