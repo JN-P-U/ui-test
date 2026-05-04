@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { usePathname } from "next/navigation";
-import { EvidenceScreenProvider, useEvidenceScreen, useEvidenceScreenCtx } from "../EvidenceContext";
+import { EvidenceScreenProvider, useEvidenceScreen, useEvidenceScreenCtx } from "../src/EvidenceContext";
 
 const mockPathname = usePathname as jest.Mock;
 
