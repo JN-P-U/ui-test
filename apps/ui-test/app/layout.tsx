@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
-import EvidenceFloat from "@/app/ui-test/EvidenceFloat";
-import { EvidenceScreenProvider } from "@/app/ui-test/EvidenceContext";
+import { EvidenceFloat, EvidenceScreenProvider } from "@ui-test/react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

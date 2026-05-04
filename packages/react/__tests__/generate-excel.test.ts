@@ -2,7 +2,7 @@
  * @jest-environment node
  */
 import ExcelJS from "exceljs";
-import { generateExcel } from "../generate-excel";
+import { generateExcel } from "../src/generate-excel";
 
 const TINY_PNG = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 

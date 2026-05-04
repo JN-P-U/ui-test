@@ -1,8 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import EvidenceModal from "../EvidenceModal";
+import EvidenceModal from "../src/EvidenceModal";
 
-jest.mock("../generate-excel", () => ({
+jest.mock("../src/generate-excel", () => ({
   generateExcel: jest.fn().mockResolvedValue(new Uint8Array([0x50, 0x4b])),
   makeFileName: jest.fn().mockReturnValue("MAL_CHC_AC02(단위테스트케이스결과서)_UT_USR_사용자_V1.0.xlsx"),
 }));

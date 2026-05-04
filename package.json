@@ -1,41 +1,16 @@
 {
-  "name": "ui-test",
-  "version": "0.1.0",
+  "name": "ui-test-monorepo",
   "private": true,
+  "workspaces": [
+    "packages/*",
+    "packages/browser/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "test": "jest --no-coverage",
-    "test:coverage": "jest --coverage",
-    "test:e2e": "playwright test",
-    "test:all": "jest --no-coverage && playwright test"
-  },
-  "dependencies": {
-    "html-to-image": "^1.11.13",
-    "next": "16.2.4",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.59.1",
-    "exceljs": "^4.4.0",
-    "@tailwindcss/postcss": "^4",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.4",
-    "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
-    "tailwindcss": "^4",
-    "ts-jest": "^29.4.9",
-    "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "dev": "npm run dev --workspace=ui-test",
+    "build": "npm run build --workspace=ui-test",
+    "test": "npm run test --workspace=@ui-test/react",
+    "test:coverage": "npm run test:coverage --workspace=@ui-test/react",
+    "test:e2e": "npm run test:e2e --workspace=ui-test",
+    "test:all": "npm run test --workspace=@ui-test/react && npm run test:e2e --workspace=ui-test"
   }
 }
