@@ -263,7 +263,8 @@
     for (var i = 0; i < lines.length; i += 1) {
       if (config.maxLines && stats.readLines >= config.maxLines) return;
 
-      var original = stripCarriageReturn(lines[i]);
+      var rawLine = lines[i];
+      var original = stripCarriageReturn(rawLine);
       stats.readLines += 1;
 
       if (config.skipEmpty && !original.trim()) continue;
@@ -503,7 +504,6 @@
 
     for (var i = 0; i < resultFiles.length; i += 1) {
       triggerDownload(resultFiles[i].blob, resultFiles[i].name);
-      await delay(DOWNLOAD_DELAY_MS);
     }
 
     elements.downloadBtn.disabled = false;
@@ -515,6 +515,7 @@
     var anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = fileName || "mapped-result.log";
+    anchor.target = "_blank";
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();

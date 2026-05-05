@@ -83,6 +83,13 @@
               <input id="excludePattern" type="text" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" placeholder="비우면 제외 없음">
             </label>
           </div>
+          <div class="mt-4 border-t border-slate-100 pt-4">
+            <label class="block">
+              <span class="mb-1 block text-sm font-bold text-slate-700">경로 금지 문자 <span class="font-normal text-slate-400">(Object Storage 검증)</span></span>
+              <input id="forbiddenChars" type="text" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-mono outline-none focus:border-blue-500" placeholder="공백으로 구분">
+              <p class="mt-1 text-xs text-slate-400">공백으로 구분합니다. 비우면 금지 문자 검사를 건너뜁니다.</p>
+            </label>
+          </div>
         </section>
 
         <section class="rounded-lg border border-slate-300 bg-white p-5">
@@ -126,12 +133,32 @@
 
       <aside class="space-y-5">
         <section class="rounded-lg border border-slate-300 bg-white p-5">
+          <h2 class="mb-4 text-lg font-bold">전체 행 수 확인</h2>
+          <button id="countLinesBtn" type="button" disabled class="w-full rounded-md bg-slate-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">행 수 확인</button>
+          <div class="mt-3 rounded-md bg-slate-50 p-3 text-sm">
+            <div class="font-semibold text-slate-500">전체 행 수</div>
+            <div id="totalLineCount" class="mt-1 font-bold text-slate-800">-</div>
+          </div>
+        </section>
+
+        <section class="rounded-lg border border-slate-300 bg-white p-5">
           <h2 class="mb-4 text-lg font-bold">제약 조건</h2>
           <div class="space-y-4">
-            <label class="block">
+            <div>
               <span class="mb-1 block text-sm font-bold text-slate-700">청크 크기</span>
-              <input id="chunkSize" type="text" value="10 MB" readonly class="w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm text-slate-600">
-            </label>
+              <div class="mb-2 flex gap-4 text-sm">
+                <label class="flex cursor-pointer items-center gap-1.5">
+                  <input type="radio" name="chunkUnit" id="chunkUnitMb" class="accent-blue-600" checked>
+                  MB <span class="text-slate-400">(최대: 10)</span>
+                </label>
+                <label class="flex cursor-pointer items-center gap-1.5">
+                  <input type="radio" name="chunkUnit" id="chunkUnitLines" class="accent-blue-600">
+                  행
+                </label>
+              </div>
+              <input id="chunkSizeInput" type="number" min="1" step="1" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" placeholder="비우면 단일 파일">
+              <div id="partCountResult" class="mt-1 text-xs font-semibold text-blue-600 hidden"></div>
+            </div>
             <label class="block">
               <span class="mb-1 block text-sm font-bold text-slate-700">최대 처리 용량(MB)</span>
               <input id="maxMegabytes" type="number" min="0" step="1" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" placeholder="비우면 전체">
@@ -141,8 +168,9 @@
               <input id="maxLines" type="number" min="0" step="1" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" placeholder="비우면 제한 없음">
             </label>
             <label class="block">
-              <span class="mb-1 block text-sm font-bold text-slate-700">분할 행 수(Line Count)</span>
-              <input id="splitLineCount" type="number" min="1" step="1" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" placeholder="예: 100000, 비우면 단일 파일">
+              <span class="mb-1 block text-sm font-bold text-slate-700">처리 파트 목록</span>
+              <input id="partList" type="text" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" placeholder="예: 1, 3, 5-7 (비우면 전체)">
+              <p class="mt-1 text-xs text-slate-400">청크 크기 설정 시에만 동작합니다.</p>
             </label>
             <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
               <input id="skipEmpty" type="checkbox">
@@ -188,10 +216,11 @@
   var ELEMENT_IDS = [
     "fileInput", "dropZone", "fileStatus", "metaName", "metaSize", "metaDate",
     "nfsPrefix", "objectPrefix", "regexPattern", "replacement", "flagIgnoreCase", "flagMultiline",
-    "includePattern", "excludePattern", "maxMegabytes", "maxLines", "splitLineCount", "skipEmpty",
+    "includePattern", "excludePattern", "maxMegabytes", "maxLines", "skipEmpty",
     "progressBar", "progressText", "readBytes", "lineCount", "validCount", "invalidCount",
     "outputBytes", "outputFiles", "message", "startBtn", "cancelBtn", "downloadBtn",
-    "preview", "invalidPreview"
+    "preview", "invalidPreview", "countLinesBtn", "totalLineCount",
+    "chunkUnitMb", "chunkUnitLines", "chunkSizeInput", "partList", "forbiddenChars", "partCountResult"
   ];
   var DROP_ACTIVE_CLASSES = ["border-blue-500", "bg-blue-50"];
   var OUTPUT_ORDER = ["report", "errorList", "mapped"];
@@ -200,6 +229,7 @@
   var resultFiles = [];
   var cancelRequested = false;
   var isProcessing = false;
+  var isCountingLines = false;
 
   var elements = {};
 
@@ -213,6 +243,7 @@
     ELEMENT_IDS.forEach(function (id) {
       elements[id] = document.getElementById(id);
     });
+    elements.forbiddenChars.value = '\\ * ? " < > | # %';
   }
 
   function bindEvents() {
@@ -238,12 +269,17 @@
       setFile(event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]);
     });
 
+    elements.countLinesBtn.addEventListener("click", countAllLines);
     elements.startBtn.addEventListener("click", startProcessing);
     elements.cancelBtn.addEventListener("click", function () {
       cancelRequested = true;
       setMessage("처리 중단 요청됨. 현재 청크 처리 후 멈춥니다.");
     });
     elements.downloadBtn.addEventListener("click", downloadResult);
+    
+    elements.chunkSizeInput.addEventListener("input", updatePartCount);
+    elements.chunkUnitMb.addEventListener("change", updatePartCount);
+    elements.chunkUnitLines.addEventListener("change", updatePartCount);
   }
 
   function setDropZoneActive(isActive) {
@@ -257,12 +293,16 @@
     elements.downloadBtn.disabled = true;
     resetProgress();
 
+    elements.totalLineCount.textContent = "-";
+
     if (!selectedFile) {
       elements.fileStatus.textContent = "파일 없음";
       elements.metaName.textContent = "-";
       elements.metaSize.textContent = "-";
       elements.metaDate.textContent = "-";
       elements.startBtn.disabled = true;
+      elements.countLinesBtn.disabled = true;
+      updatePartCount();
       return;
     }
 
@@ -271,6 +311,8 @@
     elements.metaSize.textContent = formatBytes(selectedFile.size);
     elements.metaDate.textContent = selectedFile.lastModified ? formatDate(selectedFile.lastModified) : "-";
     elements.startBtn.disabled = false;
+    elements.countLinesBtn.disabled = false;
+    updatePartCount();
     setMessage("파일을 선택했습니다. NFS/Object Storage 접두사와 제약 조건을 확인한 뒤 처리를 시작하세요.");
   }
 
@@ -290,7 +332,13 @@
     releaseResultFiles();
     setProcessingControls(true);
     resetProgress();
-    setMessage("10MB 청크 단위로 읽고, Mapping Report CSV와 Error List TXT를 생성합니다.");
+    var chunkDesc = config.chunkSizeLines
+      ? config.chunkSizeLines.toLocaleString() + "행"
+      : config.chunkSizeBytes
+        ? (config.chunkSizeBytes / 1024 / 1024).toFixed(0) + "MB"
+        : "10MB";
+    var partDesc = config.partList ? " [파트: " + elements.partList.value.trim() + "]" : "";
+    setMessage(chunkDesc + " 단위 청크로 읽고, Mapping Report CSV와 Error List TXT를 생성합니다." + partDesc);
 
     try {
       var result = await processFile(selectedFile, config);
@@ -316,9 +364,10 @@
   }
 
   function setProcessingControls(processing) {
-    elements.startBtn.disabled = processing || !selectedFile;
+    elements.startBtn.disabled = processing || isCountingLines || !selectedFile;
     elements.cancelBtn.disabled = !processing;
     elements.downloadBtn.disabled = processing || !resultFiles.length;
+    elements.countLinesBtn.disabled = processing || isCountingLines || !selectedFile;
   }
 
   function buildConfig() {
@@ -333,6 +382,25 @@
     if (elements.flagIgnoreCase.checked) flags += "i";
     if (elements.flagMultiline.checked) flags += "m";
 
+    var chunkUnit = elements.chunkUnitLines.checked ? "lines" : "mb";
+    var chunkSizeRaw = parseOptionalPositiveInteger(elements.chunkSizeInput.value, "청크 크기");
+    var chunkSizeMb = 0, chunkSizeLines = 0, chunkSizeBytes = 0;
+    if (chunkUnit === "mb" && chunkSizeRaw > 0) {
+      chunkSizeMb = Math.min(chunkSizeRaw, 10);
+      chunkSizeBytes = chunkSizeMb * 1024 * 1024;
+    } else if (chunkUnit === "lines" && chunkSizeRaw > 0) {
+      chunkSizeLines = chunkSizeRaw;
+    }
+
+    var partListRaw = String(elements.partList.value || "").trim();
+    var partList = partListRaw ? parsePartList(partListRaw) : null;
+    if (partList !== null && partList.length === 0) {
+      throw new Error("처리 파트 목록에 유효한 번호가 없습니다.");
+    }
+    if (partList && !chunkSizeLines && !chunkSizeBytes) {
+      throw new Error("파트 목록을 사용하려면 청크 크기를 먼저 설정하세요.");
+    }
+
     return {
       nfsPrefix: nfsPrefix,
       objectPrefix: objectPrefix,
@@ -344,7 +412,13 @@
       skipEmpty: elements.skipEmpty.checked,
       maxBytes: parseOptionalLimit(elements.maxMegabytes.value, 1024 * 1024),
       maxLines: parseOptionalLimit(elements.maxLines.value, 1),
-      splitLineCount: parseOptionalPositiveInteger(elements.splitLineCount.value, "분할 행 수")
+      chunkSizeMb: chunkSizeMb,
+      chunkSizeLines: chunkSizeLines,
+      chunkSizeBytes: chunkSizeBytes,
+      ioBufBytes: chunkSizeBytes > 0 ? chunkSizeBytes : CHUNK_SIZE_BYTES,
+      partList: partList,
+      forbiddenCharsList: parseForbiddenCharsList(elements.forbiddenChars.value),
+      forbiddenCharsRegex: buildForbiddenCharsRegex(elements.forbiddenChars.value)
     };
   }
 
@@ -398,7 +472,7 @@
     while (offset < totalBytes) {
       if (cancelRequested) throwCancelled();
 
-      var end = Math.min(offset + CHUNK_SIZE_BYTES, totalBytes);
+      var end = Math.min(offset + config.ioBufBytes, totalBytes);
       var sourceBlob = file.slice(offset, end);
       var buffer = await sourceBlob.arrayBuffer();
       var text = decoder.decode(buffer, { stream: end < totalBytes });
@@ -440,18 +514,81 @@
     for (var i = 0; i < lines.length; i += 1) {
       if (config.maxLines && stats.readLines >= config.maxLines) return;
 
-      var original = stripCarriageReturn(lines[i]);
+      var rawLine = lines[i];
+      var original = stripCarriageReturn(rawLine);
       stats.readLines += 1;
+
+      var isBoundaryCrossed = false;
+      if (config.chunkSizeLines && outputs.mapped.virtualLineCount >= config.chunkSizeLines) {
+        isBoundaryCrossed = true;
+      } else if (config.chunkSizeBytes && outputs.mapped.virtualBytes >= config.chunkSizeBytes) {
+        isBoundaryCrossed = true;
+      }
+
+      if (isBoundaryCrossed) {
+        if (outputs.mapped.isCurrentChunkSelected) {
+          finalizeCurrentSplit(outputs.mapped, encoder, stats);
+          finalizeCurrentSplit(outputs.report, encoder, stats);
+          finalizeCurrentSplit(outputs.errorList, encoder, stats);
+        }
+        advanceToNextChunk(config, outputs.mapped);
+        outputs.report.currentChunkIndex = outputs.mapped.currentChunkIndex;
+        outputs.report.isCurrentChunkSelected = outputs.mapped.isCurrentChunkSelected;
+        outputs.errorList.currentChunkIndex = outputs.mapped.currentChunkIndex;
+        outputs.errorList.isCurrentChunkSelected = outputs.mapped.isCurrentChunkSelected;
+        
+        outputs.mapped.virtualLineCount = 0;
+        outputs.mapped.virtualBytes = 0;
+      }
+
+      outputs.mapped.virtualLineCount += 1;
+      outputs.mapped.virtualBytes += rawLine.length + 1;
 
       if (shouldSkipLine(original, config)) continue;
 
       var result = mapAndValidateLine(original, config);
-      appendProcessedResult(result, encoder, outputs, stats);
 
-      if (outputs.mapped.splitLineCount && outputs.mapped.currentLineCount >= outputs.mapped.splitLineCount) {
-        finalizeCurrentSplit(outputs.mapped, encoder, stats);
+      if (!outputs.mapped.isCurrentChunkSelected) {
+        continue;
+      }
+
+      appendProcessedResult(result, encoder, outputs, stats);
+    }
+  }
+
+  function advanceToNextChunk(config, output) {
+    output.currentChunkIndex += 1;
+    output.isCurrentChunkSelected = isPartSelected(output.partList, output.currentChunkIndex);
+  }
+
+  function isPartSelected(partList, chunkIndex) {
+    if (!partList || !partList.length) return true;
+    return partList.indexOf(chunkIndex) !== -1;
+  }
+
+  function parsePartList(value) {
+    var nums = [];
+    var segs = String(value).split(",");
+    for (var i = 0; i < segs.length; i++) {
+      var seg = segs[i].trim();
+      if (!seg) continue;
+      var dash = seg.indexOf("-");
+      if (dash > 0) {
+        var from = parseInt(seg.slice(0, dash).trim(), 10);
+        var to = parseInt(seg.slice(dash + 1).trim(), 10);
+        if (!isNaN(from) && !isNaN(to) && from >= 1 && to >= from) {
+          for (var n = from; n <= to; n++) nums.push(n);
+        }
+      } else {
+        var n = parseInt(seg, 10);
+        if (!isNaN(n) && n >= 1) nums.push(n);
       }
     }
+    var unique = [];
+    for (var j = 0; j < nums.length; j++) {
+      if (unique.indexOf(nums[j]) === -1) unique.push(nums[j]);
+    }
+    return unique.sort(function (a, b) { return a - b; });
   }
 
   function shouldSkipLine(line, config) {
@@ -498,7 +635,7 @@
       mapped = mapped.replace(config.mappingRegex, config.replacement);
     }
 
-    reason = addReason(reason, validateObjectPath(mapped));
+    reason = addReason(reason, validateObjectPath(mapped, config));
     return {
       original: original,
       mapped: mapped,
@@ -517,14 +654,15 @@
     return toPrefix + rest;
   }
 
-  function validateObjectPath(path) {
+  function validateObjectPath(path, config) {
     var reason = "";
 
     if (!path) {
       reason = addReason(reason, "경로 비어 있음");
     }
-    if (/[\\*?"<>|#%]/.test(path)) {
-      reason = addReason(reason, "금지 특수문자 포함(\\, *, ?, \", <, >, |, #, %)");
+    if (config && config.forbiddenCharsRegex && config.forbiddenCharsRegex.test(path)) {
+      var found = config.forbiddenCharsList.filter(function (c) { return path.indexOf(c) !== -1; });
+      reason = addReason(reason, "금지 특수문자 포함(" + found.map(displayChar).join(", ") + ")");
     }
     if (path.length > 1024) {
       reason = addReason(reason, "전체 경로 길이 1,024자 초과");
@@ -549,25 +687,31 @@
 
   function createOutputStates(fileName, config) {
     return {
-      mapped: createOutputState(fileName, "mapped", TEXT_MIME_TYPE, "", config.splitLineCount),
-      report: createOutputState(fileName, "report", CSV_MIME_TYPE, CSV_HEADER, 0),
-      errorList: createOutputState(fileName, "errorList", TEXT_MIME_TYPE, "", 0)
+      mapped: createOutputState(fileName, "mapped", TEXT_MIME_TYPE, "", config.chunkSizeLines, config.chunkSizeBytes, config.partList),
+      report: createOutputState(fileName, "report", CSV_MIME_TYPE, CSV_HEADER, config.chunkSizeLines, config.chunkSizeBytes, config.partList),
+      errorList: createOutputState(fileName, "errorList", TEXT_MIME_TYPE, "", config.chunkSizeLines, config.chunkSizeBytes, config.partList)
     };
   }
 
-  function createOutputState(fileName, kind, mimeType, header, splitLineCount) {
+  function createOutputState(fileName, kind, mimeType, header, splitLineCount, chunkSizeBytes, partList) {
     return {
       kind: kind,
       sourceName: fileName || "result.log",
       mimeType: mimeType,
       header: header || "",
       splitLineCount: splitLineCount || 0,
+      chunkSizeBytes: chunkSizeBytes || 0,
+      partList: partList || null,
       files: [],
       currentBlob: null,
       currentText: "",
       currentLineCount: 0,
       currentBytes: 0,
-      splitIndex: 0
+      splitIndex: 0,
+      currentChunkIndex: 1,
+      isCurrentChunkSelected: isPartSelected(partList, 1),
+      virtualLineCount: 0,
+      virtualBytes: 0
     };
   }
 
@@ -644,13 +788,15 @@
     if (!output.currentBlob || !output.currentLineCount) return;
 
     output.splitIndex += 1;
-    output.files[output.files.length] = {
-      name: makeOutputFileName(output, output.splitIndex),
-      blob: output.currentBlob,
-      bytes: output.currentBytes,
-      kind: output.kind
-    };
-    stats.fileCount += 1;
+    if (isPartSelected(output.partList, output.currentChunkIndex)) {
+      output.files[output.files.length] = {
+        name: makeOutputFileName(output, output.currentChunkIndex),
+        blob: output.currentBlob,
+        bytes: output.currentBytes,
+        kind: output.kind
+      };
+      stats.fileCount += 1;
+    }
 
     output.currentBlob = null;
     output.currentText = "";
@@ -712,8 +858,6 @@
 
     for (var i = 0; i < resultFiles.length; i += 1) {
       triggerDownload(resultFiles[i].blob, resultFiles[i].name);
-      resultFiles[i].blob = null;
-      await delay(DOWNLOAD_DELAY_MS);
     }
 
     releaseResultFiles();
@@ -726,6 +870,7 @@
     var anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = fileName || "mapping-report.csv";
+    anchor.target = "_blank";
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -743,18 +888,17 @@
 
   function makeOutputFileName(output, index) {
     var parsed = splitFileName(output.sourceName || "result.log");
+    var isSplit = output.splitLineCount || output.chunkSizeBytes;
+    var partSuffix = isSplit ? ".part" + padNumber(index, 4) : "";
 
     if (output.kind === "report") {
-      return parsed.base + ".mapping-report.csv";
+      return parsed.base + ".mapping-report" + partSuffix + ".csv";
     }
     if (output.kind === "errorList") {
-      return parsed.base + ".error-list.txt";
+      return parsed.base + ".error-list" + partSuffix + ".txt";
     }
 
-    var suffix = ".mapped";
-    if (output.splitLineCount) {
-      suffix += ".part" + padNumber(index, 4);
-    }
+    var suffix = ".mapped" + partSuffix;
     return parsed.base + suffix + parsed.ext;
   }
 
@@ -773,6 +917,107 @@
   function setMessage(message, isError) {
     elements.message.textContent = message || "";
     elements.message.className = "mt-4 min-h-6 text-sm " + (isError ? "text-red-600" : "text-slate-600");
+  }
+
+  function updatePartCount() {
+    if (!selectedFile) {
+      elements.partCountResult.classList.add("hidden");
+      return;
+    }
+
+    var unit = elements.chunkUnitLines.checked ? "lines" : "mb";
+    var sizeRaw = Number(elements.chunkSizeInput.value);
+
+    if (!sizeRaw || sizeRaw <= 0) {
+      elements.partCountResult.classList.add("hidden");
+      return;
+    }
+
+    elements.partCountResult.classList.remove("hidden", "text-red-500");
+    elements.partCountResult.classList.add("text-blue-600");
+
+    if (unit === "mb") {
+      var sizeMb = Math.min(sizeRaw, 10);
+      var parts = Math.ceil(selectedFile.size / (sizeMb * 1024 * 1024));
+      elements.partCountResult.textContent = "예상 파트 수: " + parts.toLocaleString() + "개";
+    } else {
+      var totalLines = elements.totalLineCount.textContent.replace(/[^0-9]/g, "");
+      if (!totalLines) {
+        elements.partCountResult.textContent = "행 단위 계산을 위해 먼저 '행 수 확인'을 실행해주세요.";
+        elements.partCountResult.classList.remove("text-blue-600");
+        elements.partCountResult.classList.add("text-red-500");
+      } else {
+        var parts = Math.ceil(Number(totalLines) / sizeRaw);
+        elements.partCountResult.textContent = "예상 파트 수: " + parts.toLocaleString() + "개";
+      }
+    }
+  }
+
+  async function countAllLines() {
+    if (!selectedFile || isProcessing || isCountingLines) return;
+
+    isCountingLines = true;
+    elements.countLinesBtn.disabled = true;
+    elements.startBtn.disabled = true;
+    elements.totalLineCount.textContent = "확인 중...";
+
+    try {
+      var count = await streamLineCount(selectedFile);
+      elements.totalLineCount.textContent = count.toLocaleString() + " 행";
+      updatePartCount();
+    } catch (error) {
+      elements.totalLineCount.textContent = "오류 발생";
+    } finally {
+      isCountingLines = false;
+      elements.countLinesBtn.disabled = !selectedFile;
+      elements.startBtn.disabled = !selectedFile;
+    }
+  }
+
+  async function streamLineCount(file) {
+    var offset = 0;
+    var count = 0;
+    var lastByte = 0;
+
+    while (offset < file.size) {
+      var end = Math.min(offset + CHUNK_SIZE_BYTES, file.size);
+      var buffer = await file.slice(offset, end).arrayBuffer();
+      var bytes = new Uint8Array(buffer);
+      for (var i = 0; i < bytes.length; i++) {
+        if (bytes[i] === 0x0a) count++;
+      }
+      if (bytes.length > 0) lastByte = bytes[bytes.length - 1];
+      offset = end;
+      buffer = null;
+      bytes = null;
+      await nextFrame();
+    }
+
+    if (file.size > 0 && lastByte !== 0x0a) count++;
+    return count;
+  }
+
+  function parseForbiddenCharsList(value) {
+    return String(value || "").split(/\s+/).filter(function (c) { return c.length === 1; });
+  }
+
+  function buildForbiddenCharsRegex(value) {
+    var chars = parseForbiddenCharsList(value);
+    if (!chars.length) return null;
+    var classContent = chars.map(escapeForCharClass).join("");
+    try { return new RegExp("[" + classContent + "]"); } catch (e) { return null; }
+  }
+
+  function escapeForCharClass(c) {
+    if (c === "\\") return "\\\\";
+    if (c === "]") return "\\]";
+    if (c === "^") return "\\^";
+    if (c === "-") return "\\-";
+    return c;
+  }
+
+  function displayChar(c) {
+    return c === "\\" ? "\\\\" : c;
   }
 
   function throwCancelled() {

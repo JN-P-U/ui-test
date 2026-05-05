@@ -70,7 +70,9 @@ export default function EvidenceModal({
     setLoading(true);
     try {
       const bytes = await generateExcel({ serviceCode, screenId, screenName, author, bizCategory, level1, level2, level3, level4, cases });
-      const url = URL.createObjectURL(new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+      const buffer = new ArrayBuffer(bytes.byteLength);
+      new Uint8Array(buffer).set(bytes);
+      const url = URL.createObjectURL(new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
       const a = document.createElement("a");
       a.href = url; a.download = previewFileName; a.click();
       URL.revokeObjectURL(url);
