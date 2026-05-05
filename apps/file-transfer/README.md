@@ -4,7 +4,7 @@
 
 ## 실행
 
-별도 서버나 설치 없이 `apps/file-transfer/index.html`을 브라우저에서 열면 됩니다.
+별도 서버나 설치 없이 `apps/file-transfer/file-transfer.html`을 브라우저에서 열면 됩니다.
 
 Tailwind CSS는 CDN 방식으로 불러옵니다. 파일 처리 로직은 `index.html` 내부 `<script>`에 포함되어 있으며 외부 JavaScript 라이브러리 없이 Vanilla JS만 사용합니다.
 
@@ -128,7 +128,7 @@ CSV 컬럼:
 
 ## 파일 구성
 
-- `index.html`: UI와 스트리밍 처리/매핑/검증/CSV/TXT 다운로드 로직이 모두 포함된 단독 실행 파일
+- `file-transfer.html`: UI와 스트리밍 처리/매핑/검증/CSV/TXT 다운로드 로직이 모두 포함된 단독 실행 파일
 - `file-transfer.js`: 이전 분리형 구현 파일이며 현재 `index.html`에서는 참조하지 않습니다.
 - `gen-test-log.js`: 로컬 테스트용 100MB 로그 파일 생성기
 
