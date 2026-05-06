@@ -4,7 +4,8 @@
   "workspaces": [
     "apps/*",
     "packages/*",
-    "packages/browser/*"
+    "packages/browser/*",
+    "apps/ui-test/test-evidence"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=ui-test",
