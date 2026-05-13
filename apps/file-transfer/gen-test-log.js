@@ -37,26 +37,37 @@ writeStream.on('finish', () => {
   console.log(`📏 최종 용량: ${(currentSize / (1024 * 1024)).toFixed(2)} MB`);
 });
 
+function randomDate() {
+  const year = Math.floor(Math.random() * (2026 - 2020 + 1)) + 2020;
+  const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+  const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+  const hour = String(Math.floor(Math.random() * 24)).padStart(2, '0');
+  const min = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+  return `${year}-${month}-${day} ${hour}:${min}`;
+}
+
 function generateLine() {
   const base = basePaths[Math.floor(Math.random() * basePaths.length)];
   const year = Math.floor(Math.random() * (2026 - 2010 + 1)) + 2010;
   const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
   const day = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
   const ext = extensions[Math.floor(Math.random() * extensions.length)];
-  
+
   let filenameStr = Math.random().toString(36).substring(2, 15);
-  
+
   // 에러 검증용: 5% 확률로 특수문자 삽입
   if (Math.random() < 0.05) {
     filenameStr += specialChars[Math.floor(Math.random() * specialChars.length)];
   }
-  
+
   // 에러 검증용: 1% 확률로 비정상적으로 긴 경로 생성
   if (Math.random() < 0.01) {
     filenameStr = 'long_path_violation_' + 'a'.repeat(500);
   }
 
-  return `${base}${year}/${month}/${day}/${filenameStr}${ext}\n`;
+  const logTime = randomDate();
+  const filePath = `${base}${year}/${month}/${day}/${filenameStr}${ext}`;
+  return `${logTime} ${filePath}\n`;
 }
 
 function write() {

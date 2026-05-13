@@ -4,7 +4,134 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>file-transfer | 대용량 로그 기반 파일 이행 매핑 툴</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+*,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:#cbd5e1}
+*{margin:0;padding:0}
+html{line-height:1.5;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
+body{line-height:inherit}
+a{color:inherit;text-decoration:inherit}
+code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:1em}
+button,input,optgroup,select,textarea{font-family:inherit;font-size:100%;font-weight:inherit;line-height:inherit;color:inherit;margin:0;padding:0}
+button{cursor:pointer;background-color:transparent;background-image:none}
+textarea{resize:vertical}
+input::placeholder,textarea::placeholder{opacity:1;color:#94a3b8}
+:disabled{cursor:default}
+img,svg,video,canvas,audio,iframe,embed,object{display:block;vertical-align:middle}
+img,video{max-width:100%;height:auto}
+[hidden]{display:none!important}
+table{border-collapse:collapse;width:100%}
+
+/* display */
+.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none!important}.inline{display:inline}.inline-flex{display:inline-flex}.inline-block{display:inline-block}
+
+/* flex */
+.flex-col{flex-direction:column}.flex-row{flex-direction:row}
+.items-start{align-items:flex-start}.items-center{align-items:center}.items-end{align-items:flex-end}
+.justify-start{justify-content:flex-start}.justify-center{justify-content:center}.justify-end{justify-content:flex-end}.justify-between{justify-content:space-between}
+.flex-1{flex:1 1 0%}.flex-none{flex:none}.shrink-0{flex-shrink:0}
+
+/* grid */
+.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}
+.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid-cols-7{grid-template-columns:repeat(7,minmax(0,1fr))}
+
+/* gap / space */
+.gap-1{gap:4px}.gap-1\.5{gap:6px}.gap-2{gap:8px}.gap-3{gap:12px}.gap-4{gap:16px}.gap-5{gap:20px}.gap-6{gap:24px}
+.space-y-4>:not([hidden])~:not([hidden]){margin-top:16px}
+.space-y-5>:not([hidden])~:not([hidden]){margin-top:20px}
+
+/* sizing */
+.w-0{width:0}.w-full{width:100%}.h-full{height:100%}
+.h-4{height:16px}.h-\[38px\]{height:38px}.h-72{height:288px}
+.min-h-screen{min-height:100vh}.min-h-44{min-height:176px}.min-h-5{min-height:20px}.min-h-6{min-height:24px}
+.max-w-7xl{max-width:80rem}.max-h-72{max-height:288px}
+
+/* padding */
+.p-3{padding:12px}.p-5{padding:20px}
+.px-1{padding-left:4px;padding-right:4px}.px-2{padding-left:8px;padding-right:8px}.px-3{padding-left:12px;padding-right:12px}.px-4{padding-left:16px;padding-right:16px}.px-5{padding-left:20px;padding-right:20px}
+.py-0\.5{padding-top:2px;padding-bottom:2px}.py-1{padding-top:4px;padding-bottom:4px}.py-1\.5{padding-top:6px;padding-bottom:6px}.py-2{padding-top:8px;padding-bottom:8px}.py-6{padding-top:24px;padding-bottom:24px}.py-8{padding-top:32px;padding-bottom:32px}
+.pt-4{padding-top:16px}.pb-5{padding-bottom:20px}
+
+/* margin */
+.mx-auto{margin-left:auto;margin-right:auto}
+.mt-1{margin-top:4px}.mt-2{margin-top:8px}.mt-3{margin-top:12px}.mt-4{margin-top:16px}.mt-5{margin-top:20px}
+.mb-1{margin-bottom:4px}.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mb-4{margin-bottom:16px}
+
+/* typography */
+.text-xs{font-size:12px;line-height:16px}.text-sm{font-size:14px;line-height:20px}.text-base{font-size:16px;line-height:24px}.text-lg{font-size:18px;line-height:28px}.text-xl{font-size:20px;line-height:28px}.text-2xl{font-size:24px;line-height:32px}
+.font-normal{font-weight:400}.font-semibold{font-weight:600}.font-bold{font-weight:700}
+.font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+.italic{font-style:italic}.tracking-normal{letter-spacing:0}.leading-5{line-height:20px}
+.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.whitespace-nowrap{white-space:nowrap}.break-all{word-break:break-all}
+
+/* text colors */
+.text-white{color:#fff}
+.text-slate-400{color:#94a3b8}.text-slate-500{color:#64748b}.text-slate-600{color:#475569}.text-slate-700{color:#334155}.text-slate-800{color:#1e293b}.text-slate-900{color:#0f172a}.text-slate-100{color:#f1f5f9}
+.text-blue-600{color:#2563eb}.text-blue-700{color:#1d4ed8}
+.text-red-100{color:#fee2e2}.text-red-500{color:#ef4444}.text-red-600{color:#dc2626}
+.text-orange-600{color:#ea580c}.text-orange-700{color:#c2410c}
+.text-emerald-600{color:#059669}
+
+/* bg colors */
+.bg-white{background-color:#fff}
+.bg-slate-50{background-color:#f8fafc}.bg-slate-100{background-color:#f1f5f9}.bg-slate-200{background-color:#e2e8f0}.bg-slate-300{background-color:#cbd5e1}.bg-slate-600{background-color:#475569}.bg-slate-700{background-color:#334155}.bg-slate-950{background-color:#020617}
+.bg-blue-50{background-color:#eff6ff}.bg-blue-600{background-color:#2563eb}
+.bg-emerald-600{background-color:#059669}.bg-teal-600{background-color:#0d9488}.bg-indigo-600{background-color:#4f46e5}
+.bg-orange-50{background-color:#fff7ed}
+
+/* border */
+.border{border-width:1px}.border-0{border-width:0}.border-2{border-width:2px}
+.border-b{border-bottom-width:1px}.border-t{border-top-width:1px}
+.border-dashed{border-style:dashed}
+.rounded{border-radius:4px}.rounded-md{border-radius:6px}.rounded-lg{border-radius:8px}.rounded-full{border-radius:9999px}
+.border-slate-100{border-color:#f1f5f9}.border-slate-200{border-color:#e2e8f0}.border-slate-300{border-color:#cbd5e1}.border-slate-400{border-color:#94a3b8}
+
+/* overflow */
+.overflow-hidden{overflow:hidden}.overflow-auto{overflow:auto}
+
+/* misc */
+.cursor-pointer{cursor:pointer}.resize-y{resize:vertical}.outline-none{outline:2px solid transparent;outline-offset:2px}
+.accent-blue-600{accent-color:#2563eb}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
+
+/* transition */
+.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:150ms}
+.transition-all{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:150ms}
+
+/* hover */
+.hover\:border-blue-400:hover{border-color:#60a5fa}.hover\:bg-blue-50:hover{background-color:#eff6ff}.hover\:bg-slate-50:hover{background-color:#f8fafc}.hover\:underline:hover{text-decoration-line:underline}
+
+/* focus */
+.focus\:border-blue-500:focus{border-color:#3b82f6}
+
+/* disabled */
+.disabled\:cursor-not-allowed:disabled{cursor:not-allowed}.disabled\:bg-slate-300:disabled{background-color:#cbd5e1}
+
+/* responsive sm ≥640px */
+@media(min-width:640px){
+  .sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sm\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+/* responsive md ≥768px */
+@media(min-width:768px){
+  .md\:flex-row{flex-direction:row}
+  .md\:items-end{align-items:flex-end}
+  .md\:justify-between{justify-content:space-between}
+  .md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .md\:grid-cols-\[minmax\(0\,1fr\)_160px\]{grid-template-columns:minmax(0,1fr) 160px}
+}
+/* responsive lg ≥1024px */
+@media(min-width:1024px){
+  .lg\:grid-cols-\[minmax\(0\,1fr\)_380px\]{grid-template-columns:minmax(0,1fr) 380px}
+}
+/* responsive xl ≥1280px */
+@media(min-width:1280px){
+  .xl\:grid-cols-7{grid-template-columns:repeat(7,minmax(0,1fr))}
+}
+  </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900">
   <main class="mx-auto max-w-7xl px-5 py-6">
@@ -197,6 +324,43 @@
           <h2 class="mb-4 text-lg font-bold">불가 목록 미리보기</h2>
           <pre id="invalidPreview" class="h-72 overflow-auto rounded-md bg-slate-950 p-3 text-xs leading-5 text-red-100"></pre>
         </section>
+
+        <section class="rounded-lg border border-slate-300 bg-white p-5">
+          <h2 class="mb-4 text-lg font-bold">폴더별 파일 건수 산출</h2>
+          <p class="mb-3 text-xs text-slate-500">로그 파일의 각 줄을 파일 경로로 인식하여 직속 상위 폴더별 건수를 자동 집계합니다. 하위 폴더 파일은 포함하지 않습니다.</p>
+          <label class="mb-3 block">
+            <span class="mb-1 block text-sm font-bold text-slate-700">경로 추출 패턴 <span class="font-normal text-slate-400">(선택)</span></span>
+            <input id="folderPathRegex" type="text" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" placeholder="예: (/\S+)  ㅡ 비우면 줄 전체를 경로로 사용">
+            <p class="mt-1 text-xs text-slate-400">캡처 그룹 사용 시 첫 번째 그룹을 경로로 추출합니다.</p>
+          </label>
+          <button id="folderCountBtn" type="button" disabled class="w-full rounded-md bg-indigo-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">폴더별 건수 산출</button>
+          <div id="folderCountMessage" class="mt-2 min-h-5 text-sm text-slate-600"></div>
+          <div id="folderCountResultDiv" class="mt-3 hidden max-h-72 overflow-auto rounded-md border border-slate-200"></div>
+          <button id="folderCountDownloadBtn" type="button" disabled class="mt-3 hidden w-full rounded-md bg-teal-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">결과 CSV 다운로드</button>
+        </section>
+
+        <section class="rounded-lg border border-slate-300 bg-white p-5">
+          <h2 class="mb-4 text-lg font-bold">지정 폴더 파일 건수 확인</h2>
+          <p class="mb-3 text-xs text-slate-500">확인할 폴더 목록을 직접 지정하면 해당 폴더에 직속된 파일 건수만 집계합니다.</p>
+          <div class="mb-3">
+            <div class="mb-1 flex items-center justify-between">
+              <span class="text-sm font-bold text-slate-700">폴더 경로 목록</span>
+              <label class="cursor-pointer rounded border border-slate-300 bg-slate-50 px-2 py-0.5 text-xs text-blue-700 hover:bg-blue-50">
+                파일 불러오기<input id="specListFile" type="file" accept=".txt,.log,.csv" class="sr-only">
+              </label>
+            </div>
+            <textarea id="specListText" rows="5" class="w-full resize-y rounded-md border border-slate-300 px-3 py-2 text-xs font-mono outline-none focus:border-blue-500" placeholder="/nfs/data/a&#10;/nfs/data/b/sub&#10;..."></textarea>
+            <p class="mt-1 text-xs text-slate-400">확인할 폴더 경로를 한 줄에 하나씩 입력하거나 파일을 불러오세요.</p>
+          </div>
+          <label class="mb-3 flex items-center gap-2 text-sm text-slate-600">
+            <input id="specMatchExact" type="checkbox">
+            줄 시작 기준 매칭 (줄의 맨 앞부터 일치)
+          </label>
+          <button id="specCountBtn" type="button" disabled class="w-full rounded-md bg-slate-700 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">건수 확인 시작</button>
+          <div id="specMessage" class="mt-2 min-h-5 text-sm text-slate-600"></div>
+          <div id="specResultDiv" class="mt-3 hidden max-h-72 overflow-auto rounded-md border border-slate-200"></div>
+          <button id="specDownloadBtn" type="button" disabled class="mt-3 hidden w-full rounded-md bg-teal-600 px-4 py-2 font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300">결과 CSV 다운로드</button>
+        </section>
       </aside>
     </section>
   </main>
@@ -212,7 +376,7 @@
   var URL_REVOKE_DELAY_MS = 1000;
   var TEXT_MIME_TYPE = "text/plain;charset=utf-8";
   var CSV_MIME_TYPE = "text/csv;charset=utf-8";
-  var CSV_HEADER = "\uFEFFOriginal_NFS_Path,Target_Object_Storage_Key,Status,Error_Reason\n";
+  var CSV_HEADER = "\uFEFF\uC6D0\uBCF8\uB85C\uADF8,\uB85C\uAE45\uC2DC\uAC04,\uC6D0\uBCF8\uACBD\uB85C,\uC624\uBE0C\uC81D\uD2B8\uD0A4\n";
   var ELEMENT_IDS = [
     "fileInput", "dropZone", "fileStatus", "metaName", "metaSize", "metaDate",
     "nfsPrefix", "objectPrefix", "regexPattern", "replacement", "flagIgnoreCase", "flagMultiline",
@@ -220,7 +384,9 @@
     "progressBar", "progressText", "readBytes", "lineCount", "validCount", "invalidCount",
     "outputBytes", "outputFiles", "message", "startBtn", "cancelBtn", "downloadBtn",
     "preview", "invalidPreview", "countLinesBtn", "totalLineCount",
-    "chunkUnitMb", "chunkUnitLines", "chunkSizeInput", "partList", "forbiddenChars", "partCountResult"
+    "chunkUnitMb", "chunkUnitLines", "chunkSizeInput", "partList", "forbiddenChars", "partCountResult",
+    "folderPathRegex", "folderCountBtn", "folderCountMessage", "folderCountResultDiv", "folderCountDownloadBtn",
+    "specListFile", "specListText", "specMatchExact", "specCountBtn", "specMessage", "specResultDiv", "specDownloadBtn"
   ];
   var DROP_ACTIVE_CLASSES = ["border-blue-500", "bg-blue-50"];
   var OUTPUT_ORDER = ["report", "errorList", "mapped"];
@@ -230,6 +396,10 @@
   var cancelRequested = false;
   var isProcessing = false;
   var isCountingLines = false;
+  var isFolderCounting = false;
+  var folderCountResults = null;
+  var isSpecCounting = false;
+  var specResults = null;
 
   var elements = {};
 
@@ -280,6 +450,20 @@
     elements.chunkSizeInput.addEventListener("input", updatePartCount);
     elements.chunkUnitMb.addEventListener("change", updatePartCount);
     elements.chunkUnitLines.addEventListener("change", updatePartCount);
+
+    elements.folderCountBtn.addEventListener("click", startFolderCount);
+    elements.folderCountDownloadBtn.addEventListener("click", downloadFolderCountCsv);
+
+    elements.specListFile.addEventListener("change", function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function (ev) { elements.specListText.value = ev.target.result || ""; };
+      reader.readAsText(file, "utf-8");
+      e.target.value = "";
+    });
+    elements.specCountBtn.addEventListener("click", startSpecCount);
+    elements.specDownloadBtn.addEventListener("click", downloadSpecCsv);
   }
 
   function setDropZoneActive(isActive) {
@@ -302,6 +486,8 @@
       elements.metaDate.textContent = "-";
       elements.startBtn.disabled = true;
       elements.countLinesBtn.disabled = true;
+      elements.folderCountBtn.disabled = true;
+      elements.specCountBtn.disabled = true;
       updatePartCount();
       return;
     }
@@ -312,6 +498,8 @@
     elements.metaDate.textContent = selectedFile.lastModified ? formatDate(selectedFile.lastModified) : "-";
     elements.startBtn.disabled = false;
     elements.countLinesBtn.disabled = false;
+    elements.folderCountBtn.disabled = false;
+    elements.specCountBtn.disabled = false;
     updatePartCount();
     setMessage("파일을 선택했습니다. NFS/Object Storage 접두사와 제약 조건을 확인한 뒤 처리를 시작하세요.");
   }
@@ -601,8 +789,8 @@
     appendReportLine(result, encoder, outputs.report, stats);
 
     if (result.reason) {
-      appendErrorListLine(result.original, encoder, outputs.errorList, stats);
-      appendInvalidPreview(result.original, result.reason, stats);
+      appendErrorListLine(result.originalLine, encoder, outputs.errorList, stats);
+      appendInvalidPreview(result.originalLine, result.reason, stats);
       stats.invalidLines += 1;
       return;
     }
@@ -618,15 +806,25 @@
     return line;
   }
 
+  var LOG_LINE_RE = /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}(?::\d{2})?)\s+(.+)$/;
+
+  function parseLogLine(line) {
+    var m = LOG_LINE_RE.exec(line);
+    if (m) return { logTime: m[1], filePath: m[2] };
+    return { logTime: "", filePath: line };
+  }
+
   function mapAndValidateLine(original, config) {
-    var mapped = original;
+    var parsed = parseLogLine(original);
+    var filePath = parsed.filePath;
+    var mapped = filePath;
     var reason = "";
 
     if (config.usePrefixMapping) {
-      if (original.indexOf(config.nfsPrefix) !== 0) {
+      if (filePath.indexOf(config.nfsPrefix) !== 0) {
         reason = addReason(reason, "원본 경로 접두사 불일치");
       } else {
-        mapped = replacePrefix(original, config.nfsPrefix, config.objectPrefix);
+        mapped = replacePrefix(filePath, config.nfsPrefix, config.objectPrefix);
       }
     }
 
@@ -637,8 +835,10 @@
 
     reason = addReason(reason, validateObjectPath(mapped, config));
     return {
-      original: original,
-      mapped: mapped,
+      originalLine: original,
+      logTime: parsed.logTime,
+      filePath: filePath,
+      mapped: reason ? "" : mapped,
       status: reason ? "Fail" : "Success",
       reason: reason
     };
@@ -667,8 +867,8 @@
     if (path.length > 1024) {
       reason = addReason(reason, "전체 경로 길이 1,024자 초과");
     }
-    if (/[\s\u0000-\u001F\u007F]/.test(path)) {
-      reason = addReason(reason, "공백 또는 제어 문자 포함");
+    if (/[\u0000-\u001F\u007F]/.test(path)) {
+      reason = addReason(reason, "제어 문자 포함");
     }
 
     return reason;
@@ -717,10 +917,10 @@
 
   function appendReportLine(result, encoder, output, stats) {
     appendOutputLine([
-      csvCell(result.original),
-      csvCell(result.mapped),
-      csvCell(result.status),
-      csvCell(result.reason)
+      csvCell(result.originalLine),
+      csvCell(result.logTime),
+      csvCell(result.filePath),
+      csvCell(result.mapped)
     ].join(","), encoder, output, stats);
   }
 
@@ -1018,6 +1218,315 @@
 
   function displayChar(c) {
     return c === "\\" ? "\\\\" : c;
+  }
+
+  async function startFolderCount() {
+    if (!selectedFile || isFolderCounting) return;
+
+    var pathRegex = null;
+    var rawPattern = String(elements.folderPathRegex.value || "").trim();
+    if (rawPattern) {
+      try {
+        pathRegex = new RegExp(rawPattern);
+      } catch (e) {
+        elements.folderCountMessage.className = "mt-2 min-h-5 text-sm text-red-600";
+        elements.folderCountMessage.textContent = "경로 추출 패턴이 올바르지 않습니다: " + e.message;
+        return;
+      }
+    }
+
+    isFolderCounting = true;
+    elements.folderCountBtn.disabled = true;
+    elements.folderCountDownloadBtn.disabled = true;
+    elements.folderCountDownloadBtn.classList.add("hidden");
+    elements.folderCountResultDiv.classList.add("hidden");
+    elements.folderCountResultDiv.innerHTML = "";
+    elements.folderCountMessage.className = "mt-2 min-h-5 text-sm text-slate-600";
+    elements.folderCountMessage.textContent = "산출 중... 0%";
+
+    try {
+      var result = await streamFolderCount(selectedFile, pathRegex);
+      folderCountResults = result;
+      elements.folderCountMessage.textContent = "결과 렌더링 중...";
+      await nextFrame();
+      renderFolderCountTable(result);
+      elements.folderCountDownloadBtn.disabled = false;
+      elements.folderCountDownloadBtn.classList.remove("hidden");
+      var folderCount = Object.keys(result.folderCounts).length;
+      var fileCount = result.totalMatched;
+      elements.folderCountMessage.textContent = "완료. 폴더 " + folderCount.toLocaleString() + "개, 파일 " + fileCount.toLocaleString() + "건 집계. (미인식 " + result.skipped.toLocaleString() + "행)";
+    } catch (error) {
+      elements.folderCountMessage.className = "mt-2 min-h-5 text-sm text-red-600";
+      elements.folderCountMessage.textContent = "오류: " + ((error && error.message) || "알 수 없는 오류");
+    } finally {
+      isFolderCounting = false;
+      elements.folderCountBtn.disabled = !selectedFile;
+    }
+  }
+
+  async function streamFolderCount(file, pathRegex) {
+    var decoder = new TextDecoder("utf-8");
+    var folderCounts = {};
+    var totalMatched = 0;
+    var skipped = 0;
+    var offset = 0;
+    var total = file.size;
+    var tail = "";
+
+    function processLine(raw) {
+      var line = stripCarriageReturn(raw);
+      if (!line.trim()) { skipped += 1; return; }
+
+      var filePath;
+      if (pathRegex) {
+        pathRegex.lastIndex = 0;
+        var m = pathRegex.exec(line);
+        if (!m) { skipped += 1; return; }
+        filePath = (m[1] !== undefined ? m[1] : m[0]).trim();
+      } else {
+        filePath = parseLogLine(line).filePath.trim();
+      }
+
+      var lastSlash = filePath.lastIndexOf("/");
+      if (lastSlash <= 0) { skipped += 1; return; }
+
+      var folder = filePath.slice(0, lastSlash);
+      folderCounts[folder] = (folderCounts[folder] || 0) + 1;
+      totalMatched += 1;
+    }
+
+    while (offset < total) {
+      var end = Math.min(offset + CHUNK_SIZE_BYTES, total);
+      var buffer = await file.slice(offset, end).arrayBuffer();
+      var text = decoder.decode(buffer, { stream: end < total });
+      var split = splitDecodedText(tail + text);
+      tail = split.tail;
+
+      var lines = split.lines;
+      for (var i = 0; i < lines.length; i++) processLine(lines[i]);
+
+      offset = end;
+      buffer = null; text = null; split = null;
+      var pct = total ? Math.round((offset / total) * 100) : 100;
+      elements.folderCountMessage.textContent = "산출 중... " + pct + "%";
+      await nextFrame();
+    }
+
+    var rest = decoder.decode();
+    if (rest) tail += rest;
+    if (tail) processLine(tail);
+
+    return { folderCounts: folderCounts, totalMatched: totalMatched, skipped: skipped };
+  }
+
+  var FOLDER_TABLE_DISPLAY_LIMIT = 500;
+
+  function renderFolderCountTable(data) {
+    var counts = data.folderCounts;
+    var entries = Object.keys(counts).map(function (k) { return { folder: k, count: counts[k] }; });
+    entries.sort(function (a, b) { return b.count - a.count || a.folder.localeCompare(b.folder); });
+
+    var total = data.totalMatched;
+    var displayCount = Math.min(entries.length, FOLDER_TABLE_DISPLAY_LIMIT);
+    var html = '<table class="w-full text-sm">';
+    html += '<thead><tr style="position:sticky;top:0;background:#f8fafc;border-bottom:1px solid #e2e8f0">';
+    html += '<th class="px-3 py-2 text-left font-semibold text-slate-600">폴더 경로</th>';
+    html += '<th class="px-3 py-2 text-right font-semibold text-slate-600 whitespace-nowrap">파일 건수</th>';
+    html += '<th class="px-3 py-2 text-right font-semibold text-slate-600">비율</th>';
+    html += '</tr></thead><tbody>';
+
+    for (var i = 0; i < displayCount; i++) {
+      var e = entries[i];
+      var pct = total ? ((e.count / total) * 100).toFixed(1) : "0.0";
+      var bg = i % 2 === 0 ? "" : ' style="background:#f8fafc"';
+      html += '<tr class="border-b border-slate-100 hover:bg-blue-50"' + bg + '>';
+      html += '<td class="px-3 py-1.5 font-mono text-xs break-all">' + escapeHtml(e.folder) + '</td>';
+      html += '<td class="px-3 py-1.5 text-right font-bold">' + e.count.toLocaleString() + '</td>';
+      html += '<td class="px-3 py-1.5 text-right text-slate-500">' + pct + '%</td>';
+      html += '</tr>';
+    }
+
+    if (entries.length > FOLDER_TABLE_DISPLAY_LIMIT) {
+      html += '<tr style="background:#fef9c3">';
+      html += '<td colspan="3" class="px-3 py-1.5 text-xs text-center" style="color:#92400e">상위 ' + FOLDER_TABLE_DISPLAY_LIMIT.toLocaleString() + '개만 표시. 전체 ' + entries.length.toLocaleString() + '개 폴더는 CSV 다운로드로 확인하세요.</td>';
+      html += '</tr>';
+    }
+
+    html += '<tr style="background:#e2e8f0;font-weight:700">';
+    html += '<td class="px-3 py-1.5 text-xs">합계 (' + entries.length.toLocaleString() + '개 폴더)</td>';
+    html += '<td class="px-3 py-1.5 text-right">' + total.toLocaleString() + '</td>';
+    html += '<td class="px-3 py-1.5 text-right">100%</td>';
+    html += '</tr></tbody></table>';
+
+    elements.folderCountResultDiv.innerHTML = html;
+    elements.folderCountResultDiv.classList.remove("hidden");
+  }
+
+  function downloadFolderCountCsv() {
+    if (!folderCountResults) return;
+
+    var counts = folderCountResults.folderCounts;
+    var entries = Object.keys(counts).map(function (k) { return { folder: k, count: counts[k] }; });
+    entries.sort(function (a, b) { return b.count - a.count || a.folder.localeCompare(b.folder); });
+    var total = folderCountResults.totalMatched;
+
+    var lines = ["﻿폴더경로,파일건수,비율(%)"];
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      var pct = total ? ((e.count / total) * 100).toFixed(2) : "0.00";
+      lines.push(csvCell(e.folder) + "," + e.count + "," + pct);
+    }
+    lines.push(csvCell("합계") + "," + total + ",100.00");
+
+    var blob = new Blob([lines.join("\n")], { type: CSV_MIME_TYPE });
+    var d = new Date();
+    var ds = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    triggerDownload(blob, "folder-count-" + ds + ".csv");
+  }
+
+  async function startSpecCount() {
+    if (!selectedFile || isSpecCounting) return;
+
+    var folders = (elements.specListText.value || "").split("\n")
+      .map(function (f) { return f.trim(); })
+      .filter(function (f) { return f.length > 0; });
+
+    if (!folders.length) {
+      elements.specMessage.className = "mt-2 min-h-5 text-sm text-red-600";
+      elements.specMessage.textContent = "폴더 경로를 하나 이상 입력하세요.";
+      return;
+    }
+
+    isSpecCounting = true;
+    elements.specCountBtn.disabled = true;
+    elements.specDownloadBtn.disabled = true;
+    elements.specDownloadBtn.classList.add("hidden");
+    elements.specResultDiv.classList.add("hidden");
+    elements.specResultDiv.innerHTML = "";
+    elements.specMessage.className = "mt-2 min-h-5 text-sm text-slate-600";
+    elements.specMessage.textContent = "확인 중... 0%";
+
+    try {
+      var result = await streamSpecCount(selectedFile, folders, elements.specMatchExact.checked);
+      specResults = { folders: folders, result: result };
+      renderSpecTable(specResults);
+      elements.specDownloadBtn.disabled = false;
+      elements.specDownloadBtn.classList.remove("hidden");
+      var matched = folders.reduce(function (s, f) { return s + result.counts[f]; }, 0);
+      elements.specMessage.textContent = "완료. " + folders.length + "개 폴더, 매칭 " + matched.toLocaleString() + "건.";
+    } catch (error) {
+      elements.specMessage.className = "mt-2 min-h-5 text-sm text-red-600";
+      elements.specMessage.textContent = "오류: " + ((error && error.message) || "알 수 없는 오류");
+    } finally {
+      isSpecCounting = false;
+      elements.specCountBtn.disabled = !selectedFile;
+    }
+  }
+
+  async function streamSpecCount(file, folders, exactFromStart) {
+    var decoder = new TextDecoder("utf-8");
+    var counts = {};
+    for (var i = 0; i < folders.length; i++) counts[folders[i]] = 0;
+    var offset = 0;
+    var total = file.size;
+    var tail = "";
+
+    function isDirectChild(line, folder) {
+      var f = folder.charAt(folder.length - 1) === "/" ? folder.slice(0, -1) : folder;
+      var prefix = f + "/";
+      var idx = exactFromStart ? (line.indexOf(prefix) === 0 ? 0 : -1) : line.indexOf(prefix);
+      if (idx === -1) return false;
+      var rest = line.slice(idx + prefix.length);
+      var ws = rest.search(/[\s\r\n]/);
+      if (ws !== -1) rest = rest.slice(0, ws);
+      return rest.length > 0 && rest.indexOf("/") === -1;
+    }
+
+    function processLine(raw) {
+      var line = stripCarriageReturn(raw);
+      if (!line.trim()) return;
+      for (var j = 0; j < folders.length; j++) {
+        if (isDirectChild(line, folders[j])) { counts[folders[j]] += 1; return; }
+      }
+    }
+
+    while (offset < total) {
+      var end = Math.min(offset + CHUNK_SIZE_BYTES, total);
+      var buffer = await file.slice(offset, end).arrayBuffer();
+      var text = decoder.decode(buffer, { stream: end < total });
+      var split = splitDecodedText(tail + text);
+      tail = split.tail;
+      for (var i = 0; i < split.lines.length; i++) processLine(split.lines[i]);
+      offset = end; buffer = null; text = null; split = null;
+      elements.specMessage.textContent = "확인 중... " + (total ? Math.round((offset / total) * 100) : 100) + "%";
+      await nextFrame();
+    }
+    var rest = decoder.decode();
+    if (rest) tail += rest;
+    if (tail) processLine(tail);
+    return { counts: counts };
+  }
+
+  function renderSpecTable(data) {
+    var folders = data.folders;
+    var counts = data.result.counts;
+    var total = folders.reduce(function (s, f) { return s + counts[f]; }, 0);
+
+    var html = '<table class="w-full text-sm">';
+    html += '<thead><tr style="position:sticky;top:0;background:#f8fafc;border-bottom:1px solid #e2e8f0">';
+    html += '<th class="px-3 py-2 text-left font-semibold text-slate-600">폴더 경로</th>';
+    html += '<th class="px-3 py-2 text-right font-semibold text-slate-600 whitespace-nowrap">파일 건수</th>';
+    html += '<th class="px-3 py-2 text-right font-semibold text-slate-600">비율</th>';
+    html += '</tr></thead><tbody>';
+
+    for (var i = 0; i < folders.length; i++) {
+      var f = folders[i];
+      var cnt = counts[f];
+      var pct = total ? ((cnt / total) * 100).toFixed(1) : "0.0";
+      var bg = i % 2 === 0 ? "" : ' style="background:#f8fafc"';
+      html += '<tr class="border-b border-slate-100 hover:bg-blue-50"' + bg + '>';
+      html += '<td class="px-3 py-1.5 font-mono text-xs break-all">' + escapeHtml(f) + '</td>';
+      html += '<td class="px-3 py-1.5 text-right font-bold">' + cnt.toLocaleString() + '</td>';
+      html += '<td class="px-3 py-1.5 text-right text-slate-500">' + pct + '%</td>';
+      html += '</tr>';
+    }
+
+    html += '<tr style="background:#e2e8f0;font-weight:700">';
+    html += '<td class="px-3 py-1.5 text-xs">합계</td>';
+    html += '<td class="px-3 py-1.5 text-right">' + total.toLocaleString() + '</td>';
+    html += '<td class="px-3 py-1.5 text-right">100%</td>';
+    html += '</tr></tbody></table>';
+
+    elements.specResultDiv.innerHTML = html;
+    elements.specResultDiv.classList.remove("hidden");
+  }
+
+  function downloadSpecCsv() {
+    if (!specResults) return;
+    var folders = specResults.folders;
+    var counts = specResults.result.counts;
+    var total = folders.reduce(function (s, f) { return s + counts[f]; }, 0);
+
+    var lines = ["﻿폴더경로,파일건수,비율(%)"];
+    for (var i = 0; i < folders.length; i++) {
+      var f = folders[i];
+      var pct = total ? ((counts[f] / total) * 100).toFixed(2) : "0.00";
+      lines.push(csvCell(f) + "," + counts[f] + "," + pct);
+    }
+    lines.push(csvCell("합계") + "," + total + ",100.00");
+
+    var blob = new Blob([lines.join("\n")], { type: CSV_MIME_TYPE });
+    var d = new Date();
+    var ds = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    triggerDownload(blob, "spec-folder-count-" + ds + ".csv");
+  }
+
+  function escapeHtml(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 
   function throwCancelled() {
