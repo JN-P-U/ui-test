@@ -5,7 +5,8 @@
     "apps/*",
     "packages/*",
     "packages/browser/*",
-    "apps/ui-test/test-evidence"
+    "apps/ui-test/test-evidence",
+    "apps/auto-ui-test/test-evidence"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=ui-test",

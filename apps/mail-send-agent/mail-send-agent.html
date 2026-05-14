@@ -110,6 +110,22 @@
       </div>
     </section>
 
+    <!-- 직접 파일 첨부 -->
+    <section class="mb-5 rounded-lg border border-slate-300 bg-white p-5">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-bold">직접 파일 첨부</h2>
+        <span id="extraFileCountBadge" class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">0개</span>
+      </div>
+      <input id="extraFileInput" type="file" multiple class="sr-only">
+      <div id="extraFileList" class="mb-4 min-h-14 space-y-2 rounded-md border border-dashed border-slate-300 bg-slate-50 p-3">
+        <p id="extraFileEmptyMsg" class="text-sm text-slate-400">추가된 파일 없음. 아래 버튼을 클릭하여 파일을 추가하세요.</p>
+      </div>
+      <button id="addExtraFileBtn" type="button"
+        class="rounded-md bg-violet-600 px-3 py-1.5 text-sm font-bold text-white hover:bg-violet-700">
+        + 파일 추가
+      </button>
+    </section>
+
     <!-- 하단: 압축 파일 목록 -->
     <section class="mb-5 rounded-lg border border-slate-300 bg-white p-5">
       <div class="mb-4 flex items-center justify-between">
@@ -146,8 +162,9 @@
 (function () {
   "use strict";
 
-  var projects  = [];   // { id, name, files: File[] }
-  var zipFiles  = [];   // { id, projectId, projectName, blob, fileName, size }
+  var projects   = [];   // { id, name, files: File[] }
+  var zipFiles   = [];   // { id, projectId, projectName, blob, fileName, size }
+  var extraFiles = [];   // { id, file: File, name, size, mimeType }
   var accessToken = null;
   var tokenClient = null;
   var settingsOpen = true;
@@ -161,6 +178,8 @@
     $("addProjectBtn").addEventListener("click", function () { $("projectDirInput").click(); });
     $("projectDirInput").addEventListener("change", handleProjectAdd);
     $("compressBtn").addEventListener("click", handleCompress);
+    $("addExtraFileBtn").addEventListener("click", function () { $("extraFileInput").click(); });
+    $("extraFileInput").addEventListener("change", handleExtraFileAdd);
     $("sendBtn").addEventListener("click", handleSend);
 
   });
@@ -261,6 +280,61 @@
         '<button class="ml-1 text-blue-400 hover:text-red-600 font-bold text-base leading-none" title="제거">&times;</button>';
       chip.querySelector("button").addEventListener("click", function () { removeProject(p.id); });
       container.appendChild(chip);
+    });
+  }
+
+  // ── 직접 파일 첨부 ───────────────────────────────────────────
+  function handleExtraFileAdd(e) {
+    var files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    files.forEach(function (file) {
+      var isDup = extraFiles.some(function (ef) { return ef.name === file.name && ef.size === file.size; });
+      if (!isDup) {
+        extraFiles.push({
+          id: Date.now() + Math.random(),
+          file: file,
+          name: file.name,
+          size: file.size,
+          mimeType: file.type || "application/octet-stream"
+        });
+      }
+    });
+    e.target.value = "";
+    renderExtraFiles();
+    updateSendBtn();
+  }
+
+  function removeExtraFile(id) {
+    extraFiles = extraFiles.filter(function (ef) { return ef.id !== id; });
+    renderExtraFiles();
+    updateSendBtn();
+  }
+
+  function renderExtraFiles() {
+    var list = $("extraFileList");
+    $("extraFileCountBadge").textContent = extraFiles.length + "개";
+
+    if (!extraFiles.length) {
+      list.innerHTML = '<p class="text-sm text-slate-400">추가된 파일 없음. 아래 버튼을 클릭하여 파일을 추가하세요.</p>';
+      return;
+    }
+
+    list.innerHTML = "";
+    extraFiles.forEach(function (ef) {
+      var row = document.createElement("div");
+      row.className = "flex items-center justify-between rounded-md border border-slate-200 bg-white px-4 py-2.5";
+      row.innerHTML =
+        '<div class="flex min-w-0 items-center gap-3">' +
+          '<span class="text-xl">&#128206;</span>' +
+          '<div class="min-w-0">' +
+            '<div class="truncate text-sm font-semibold text-slate-800">' + escHtml(ef.name) + '</div>' +
+            '<div class="text-xs text-slate-400">' + escHtml(ef.mimeType) + ' &middot; ' + fmtBytes(ef.size) + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<button class="del-btn ml-3 shrink-0 rounded bg-red-50 px-2 py-1 text-xs text-red-500 hover:bg-red-100">삭제</button>';
+      var efCopy = ef;
+      row.querySelector(".del-btn").addEventListener("click", function () { removeExtraFile(efCopy.id); });
+      list.appendChild(row);
     });
   }
 
@@ -381,7 +455,7 @@
 
   // ── 메일 전송 ─────────────────────────────────────────────────
   function updateSendBtn() {
-    $("sendBtn").disabled = zipFiles.length === 0 || !accessToken;
+    $("sendBtn").disabled = (zipFiles.length === 0 && extraFiles.length === 0) || !accessToken;
   }
 
   async function handleSend() {
@@ -392,7 +466,7 @@
     if (!toEmail)  { setSendMsg("수신자 메일 주소를 입력하세요.", true); return; }
     if (!subject)  { setSendMsg("메일 제목을 입력하세요.", true); return; }
     if (!accessToken) { setSendMsg("Gmail 인증이 필요합니다.", true); return; }
-    if (!zipFiles.length) { setSendMsg("전송할 압축 파일이 없습니다.", true); return; }
+    if (!zipFiles.length && !extraFiles.length) { setSendMsg("전송할 첨부 파일이 없습니다.", true); return; }
 
     $("sendBtn").disabled = true;
     setSendMsg("메일 전송 중...");
@@ -402,7 +476,15 @@
       for (var i = 0; i < zipFiles.length; i++) {
         attachments.push({
           fileName: zipFiles[i].fileName,
+          mimeType: "application/zip",
           base64: await blobToBase64(zipFiles[i].blob)
+        });
+      }
+      for (var j = 0; j < extraFiles.length; j++) {
+        attachments.push({
+          fileName: extraFiles[j].name,
+          mimeType: extraFiles[j].mimeType,
+          base64: await blobToBase64(extraFiles[j].file)
         });
       }
 
@@ -445,15 +527,23 @@
 
     attachments.forEach(function (att) {
       lines.push("--" + boundary);
-      lines.push("Content-Type: application/zip");
+      lines.push("Content-Type: " + (att.mimeType || "application/octet-stream"));
       lines.push("Content-Transfer-Encoding: base64");
-      lines.push('Content-Disposition: attachment; filename="' + att.fileName + '"');
+      lines.push("Content-Disposition: attachment; " + encodeRfc5987Filename(att.fileName));
       lines.push("");
       lines.push(wrapBase64(att.base64));
     });
 
     lines.push("--" + boundary + "--");
     return lines.join("\r\n");
+  }
+
+  function encodeRfc5987Filename(name) {
+    // non-ASCII 포함 시 RFC 5987 방식으로 인코딩, ASCII만 있으면 quoted-string 사용
+    if (/[^\x20-\x7e]/.test(name)) {
+      return "filename*=UTF-8''" + encodeURIComponent(name);
+    }
+    return 'filename="' + name + '"';
   }
 
   function toBinaryStr(str) {
