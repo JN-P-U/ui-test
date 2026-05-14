@@ -706,6 +706,23 @@
   </div>
 </div>
 
+<!-- Move Folder Modal -->
+<div class="modal-overlay" id="moveFolderModal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title">📂 폴더 이동</div>
+    <div style="margin-bottom:12px;font-size:13px;color:var(--text2);">
+      이동할 위치를 선택하세요. (최대 5단계 제한)
+    </div>
+    <div style="margin-bottom:6px;font-size:12px;color:var(--text3);">이동 대상:</div>
+    <select id="moveFolderTarget" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text1);font-size:13px;margin-bottom:16px;">
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeMoveFolderModal()">취소</button>
+      <button class="btn btn-primary" onclick="confirmMoveFolder()">이동</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast container -->
 <div id="toast-container"></div>
 
@@ -720,6 +737,7 @@ let folders = [];
 let sortField   = 'createdAt';
 let sortDir     = -1;
 let currentView = 'table';
+let movingFolderId = null;
 
 // ── Korean Consonant ──
 const CHOSUNG = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
@@ -970,6 +988,7 @@ function renderFolderTree() {
             <button class="folder-tree-btn" onclick="moveFolderOrder('${folder.id}',-1)" title="위로" ${sibIdx === 0 ? 'disabled' : ''}>▲</button>
             <button class="folder-tree-btn" onclick="moveFolderOrder('${folder.id}',1)"  title="아래로" ${sibIdx === sibs.length-1 ? 'disabled' : ''}>▼</button>
             ${canAdd ? `<button class="folder-tree-btn" onclick="addSubFolder('${folder.id}')" title="하위 폴더 추가">+</button>` : `<button class="folder-tree-btn" disabled title="최대 깊이 도달">+</button>`}
+            <button class="folder-tree-btn" onclick="openMoveFolderModal('${folder.id}')" title="이동">↩</button>
             <button class="folder-tree-btn" onclick="renameFolderPrompt('${folder.id}')" title="이름 변경">✏</button>
             <button class="folder-tree-btn danger" onclick="removeFolder('${folder.id}')" title="삭제">🗑</button>
           </div>
@@ -1026,6 +1045,101 @@ function renameFolderPrompt(id) {
   save();
   renderTable();
   showToast('폴더 이름이 변경되었습니다.', 'success');
+}
+
+function openMoveFolderModal(id) {
+  const folder = getFolderById(id);
+  if (!folder) return;
+  movingFolderId = id;
+
+  const excludeIds = new Set([id, ...getAllDescendantIds(id)]);
+  const sel = document.getElementById('moveFolderTarget');
+  sel.innerHTML = '';
+
+  // "최상위(루트)로 이동" option
+  const rootOpt = document.createElement('option');
+  rootOpt.value = '';
+  rootOpt.textContent = '─ 최상위 (루트)';
+  sel.appendChild(rootOpt);
+
+  function addOptions(parentId, depth) {
+    getFolderChildren(parentId).forEach(f => {
+      if (excludeIds.has(f.id)) return;
+      // depth of f is getFolderDepth(f.id); moving 'folder' under f means folder's depth = f's depth+1
+      // folder's subtree max depth = getFolderDepth(folder.id) relative to folder itself
+      const subtreeMaxDepth = getSubtreeDepth(id); // how many levels folder's subtree has (1 = just itself)
+      if (getFolderDepth(f.id) + subtreeMaxDepth > 4) return; // would exceed 5 levels total
+      const opt = document.createElement('option');
+      opt.value = f.id;
+      opt.textContent = '　'.repeat(depth) + '📁 ' + f.name;
+      sel.appendChild(opt);
+      addOptions(f.id, depth + 1);
+    });
+  }
+  addOptions(null, 0);
+
+  // Pre-select current parent
+  sel.value = folder.parentId || '';
+  document.getElementById('moveFolderModal').classList.add('open');
+}
+
+function getSubtreeDepth(id) {
+  // Returns the max depth of the subtree rooted at id (1 = just the node, no children)
+  const children = getFolderChildren(id);
+  if (children.length === 0) return 1;
+  return 1 + Math.max(...children.map(c => getSubtreeDepth(c.id)));
+}
+
+function closeMoveFolderModal() {
+  document.getElementById('moveFolderModal').classList.remove('open');
+  movingFolderId = null;
+}
+
+function confirmMoveFolder() {
+  if (!movingFolderId) return;
+  const folder = getFolderById(movingFolderId);
+  if (!folder) return;
+
+  const sel = document.getElementById('moveFolderTarget');
+  const newParentId = sel.value || null;
+
+  if (newParentId === folder.parentId) {
+    closeMoveFolderModal();
+    return;
+  }
+
+  // Validate depth
+  if (newParentId) {
+    const parentDepth = getFolderDepth(newParentId);
+    const subtreeDepth = getSubtreeDepth(movingFolderId);
+    if (parentDepth + subtreeDepth > 4) {
+      showToast('이동 시 최대 5단계를 초과합니다.', 'error');
+      return;
+    }
+  }
+
+  folder.parentId = newParentId;
+  // Reset order so it goes to end of new parent's children
+  const sibs = getFolderChildren(newParentId);
+  folder.order = sibs.length;
+
+  // Update item categories for moved subtree
+  const movedIds = new Set([movingFolderId, ...getAllDescendantIds(movingFolderId)]);
+  items.forEach(item => {
+    if (movedIds.has(item.folderId)) {
+      const top = getTopLevelFolder(item.folderId);
+      if (top) item.category = top.name;
+    }
+  });
+
+  saveFolders();
+  save();
+  renderFolderTree();
+  updateFolderPicker();
+  updateCatFilter();
+  renderTable();
+  closeMoveFolderModal();
+  showToast(`'${folder.name}' 폴더가 이동되었습니다.`, 'success');
 }
 
 // ═══════════════════════════════════════════
@@ -1378,6 +1492,7 @@ function updateCatFilter() {
 // ── Import ──
 let activeImportTab = 'text';
 let pendingChromeItems = [];
+let pendingChromeFolders = [];
 
 function openImportModal() {
   document.getElementById('importModal').classList.add('open');
@@ -1388,6 +1503,7 @@ function closeImportModal() {
   document.getElementById('importModal').classList.remove('open');
   document.getElementById('importText').value = '';
   pendingChromeItems = [];
+  pendingChromeFolders = [];
   document.getElementById('chromePreview').style.display = 'none';
   document.getElementById('chromeFileInput').value = '';
 }
@@ -1447,6 +1563,7 @@ function readChromeFile(file) {
   reader.onload = e => {
     const parsed = parseChromeBookmarkHTML(e.target.result);
     pendingChromeItems = parsed.items;
+    pendingChromeFolders = parsed.draftFolders;
     showChromePreview(parsed);
   };
   reader.readAsText(file, 'utf-8');
@@ -1456,7 +1573,9 @@ function parseChromeBookmarkHTML(html) {
   // Use raw text scanning instead of DOMParser.
   // HTML5 parsers insert <DL> INSIDE <DT>, breaking DOM-based traversal.
   // Sequential text scan is immune to parser reorganization.
+  // Draft folders are kept separate from global `folders` until actual import.
   const collected    = [];
+  const draftFolders = [];
   const previewLines = [];
   let folderCount    = 0;
 
@@ -1464,6 +1583,18 @@ function parseChromeBookmarkHTML(html) {
   let pendingFolder = null;
   let dlDepth       = 0;
   let pos           = 0;
+
+  function findOrCreateFolder(name, parentId) {
+    let f = folders.find(x => x.parentId === parentId && x.name === name)
+         || draftFolders.find(x => x.parentId === parentId && x.name === name);
+    if (f) return f;
+    const order = folders.filter(x => x.parentId === parentId).length
+                + draftFolders.filter(x => x.parentId === parentId).length;
+    f = { id: genId('fldr_'), name, parentId: parentId || null, order };
+    draftFolders.push(f);
+    folderCount++;
+    return f;
+  }
 
   function decodeEntities(s) {
     return s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(n));
@@ -1517,13 +1648,7 @@ function parseChromeBookmarkHTML(html) {
       if (name) {
         const parentId = currentPath[currentPath.length - 1];
         if (currentPath.length <= 5) {
-          let f = folders.find(x => x.parentId === parentId && x.name === name);
-          if (!f) {
-            const sibs = folders.filter(x => x.parentId === parentId);
-            f = { id: genId('fldr_'), name, parentId: parentId || null, order: sibs.length };
-            folders.push(f);
-            folderCount++;
-          }
+          const f = findOrCreateFolder(name, parentId);
           pendingFolder = f.id;
         } else {
           pendingFolder = currentPath[currentPath.length - 1];
@@ -1550,7 +1675,7 @@ function parseChromeBookmarkHTML(html) {
     }
   }
 
-  return { items: collected, previewLines, folderCount };
+  return { items: collected, draftFolders, previewLines, folderCount };
 }
 function showChromePreview(parsed) {
   const preview = document.getElementById('chromePreview');
@@ -1576,6 +1701,8 @@ function doImportChrome() {
   if (pendingChromeItems.length === 0) {
     showToast('먼저 Chrome 북마크 파일을 선택하세요.', 'error'); return;
   }
+  // Merge draft folders into global folders only at actual import time
+  pendingChromeFolders.forEach(f => { if (!folders.find(x => x.id === f.id)) folders.push(f); });
   let added = 0;
   pendingChromeItems.forEach(({ folderId, title, url }) => {
     const category = deriveCategory(folderId);
@@ -1654,17 +1781,18 @@ document.addEventListener('keydown', e => {
     if (['fTitle','fPath','fMemo','fTags','fFolderSelect'].includes(document.activeElement.id)) saveItem();
   }
   if (e.key === 'Escape') {
-    if (document.getElementById('folderModal').classList.contains('open'))  { closeFolderModal();  return; }
-    if (document.getElementById('restoreModal').classList.contains('open')) { closeRestoreModal(); return; }
-    if (document.getElementById('importModal').classList.contains('open'))  { closeImportModal();  return; }
+    if (document.getElementById('folderModal').classList.contains('open'))     { closeFolderModal();     return; }
+    if (document.getElementById('restoreModal').classList.contains('open'))    { closeRestoreModal();    return; }
+    if (document.getElementById('importModal').classList.contains('open'))     { closeImportModal();     return; }
+    if (document.getElementById('moveFolderModal').classList.contains('open')) { closeMoveFolderModal(); return; }
     clearForm();
   }
   if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); document.getElementById('searchInput').focus(); }
 });
 
-['importModal','restoreModal','folderModal'].forEach(id => {
+['importModal','restoreModal','folderModal','moveFolderModal'].forEach(id => {
   const el = document.getElementById(id);
-  const closer = id === 'importModal' ? closeImportModal : id === 'restoreModal' ? closeRestoreModal : closeFolderModal;
+  const closer = id === 'importModal' ? closeImportModal : id === 'restoreModal' ? closeRestoreModal : id === 'moveFolderModal' ? closeMoveFolderModal : closeFolderModal;
   el.addEventListener('click', e => { if (e.target === e.currentTarget) closer(); });
 });
 
